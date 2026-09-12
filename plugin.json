@@ -1,0 +1,25 @@
+{
+  "name": "nds-romhacking-plugin",
+  "version": "1.0.0",
+  "description": "Comprehensive Nintendo DS (NDS) ROM hacking and localization plugin for Antigravity, providing tools, rules, and workflows for NitroFS management, script bytecode extraction, font/graphics localization, ARM9 ASM patching, and translation QA.",
+  "author": {
+    "name": "Antigravity NDS Localization & Romhacking Team"
+  },
+  "license": "Apache-2.0",
+  "keywords": [
+    "nds",
+    "nintendo-ds",
+    "romhacking",
+    "localization",
+    "translation",
+    "nitrofs",
+    "arm9",
+    "armips",
+    "nftr",
+    "ncgr",
+    "nclr",
+    "chrono-trigger",
+    "decompression",
+    "lz77"
+  ]
+}

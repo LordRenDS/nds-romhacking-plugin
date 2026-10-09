@@ -34,7 +34,9 @@ When working with Nintendo DS (NDS) ROM files, NitroFS, binary scripts, fonts, g
 ## 4. Fonts, Glyphs & Width (VWF)
 
 - **Variable Width Font (VWF) Metrics**: When introducing localized (e.g., Cyrillic) glyphs into NFTR or custom bitmap fonts, always define individual character width and glyph advance metrics.
-- **Dynamic Hero Token Preservation**: When calculating string pixel widths for pre-insertion validation, never strip dynamic hero tokens (`{HERO_NAME}`, `{CRONO}`, `{MARLE}`, etc.) like non-visual formatting tags. Assign hero tokens a nominal width (`DEFAULT_HERO_NAME_WIDTH_PX = 30`) to prevent dialogue box overflow when in-game names are substituted.
+- **Dynamic Variable Tokens in VWF**: When games substitute runtime strings (hero names, quantities, items) via script tokens (`{HERO_NAME}`, `{PLAYER}`, `{VAR_1}`), never strip them as zero-width formatting codes. Assign them a standard nominal reservation width (e.g. `DEFAULT_HERO_NAME_WIDTH_PX = 30`) to prevent dialogue box overflow. Specific token sets must be declared in project-specific `AGENTS.md`.
+- **Palette Integrity & Color Depth (Indexed Mode `P`)**: When modifying or re-inserting NDS 2D graphics (NCGR tiles, backgrounds, sprites), always preserve 8-bit Indexed Palette mode (`P`) matching the target NCLR palette. Modifying sprites as unindexed 24-bit RGB or 32-bit RGBA without an automated quantization pipeline corrupts tile indexing and palette banks.
+- **Syllable Hyphenation & Compound Word Preservation**: Long localized words in narrow NDS text windows require hyphenation carry. The VWF reflow engine must distinguish genuine hyphenated compound words (e.g. Russian 'что-то', 'из-за', 'кое-как') from soft line break hyphens to prevent text corruption.
 - **ARM9 Hardcoded Font Offsets**: Before expanding font headers, charmaps, or glyph pools, inspect the ARM9 binary and relevant overlay modules for hardcoded memory offsets or struct assumptions. Modifying a font header layout without patching referencing code can cause memory corruption or character misalignment.
 - **Pixel-Art Priority over TTF for 256x192**: For native Nintendo DS resolution (256x192), hand-crafted pixel-art glyphs tailored to the exact 8x8/10x10 cell bounds and 1bpp/2bpp anti-aliasing palettes must strictly take priority over automated TrueType (TTF) rasterization. Downscaled TTF fonts cause muddy anti-aliasing and illegible sub-pixel artifacts on DS LCD screens.
 - **Line Length & Overflow Pre-Checks**: Calculate string pixel widths against target text box bounding limits prior to ROM insertion. Russian/localized translations are typically 20–35% wider than English/Japanese source text.
@@ -43,7 +45,11 @@ When working with Nintendo DS (NDS) ROM files, NitroFS, binary scripts, fonts, g
 
 ## 5. Anti-Piracy (AP) & Code Injection
 
-- **Anti-Piracy (AP) Awareness**: Games like *Chrono Trigger (NDS)* include anti-tampering triggers in `arm9.bin` or overlay modules. Before and during testing, verify whether the target game has AP checks and apply verified AP bypass patches where necessary to avoid softlocks (such as infinite warp loops).
+- **Anti-Piracy (AP) Architecture on NDS**: Commercial NDS games frequently implement multi-tier anti-tampering triggers in `arm9.bin` or overlay modules. Common AP mechanisms include:
+  - **ROMCTRL Bus Timings (`0x040001A4`)**: Checking cartridge bus command response latencies and handshake timings.
+  - **EXMEMCNT Arbitration (`0x04100010`)**: Validating cartridge bus access parameters and waitstate configurations.
+  - **RAM Checksums**: Validating code segment hashes or encrypted Secure Area (`0x4000..0x7FFF`) integrity at boot or key scene transitions.
+  - **Branch Patching**: AP checks trigger softlocks (infinite loops, frozen warps, unresponsive input, disappearing NPCs). Bypassing them involves replacing conditional branches (`BEQ`/`BNE`) with unconditional branches (`B`) or `NOP` instructions (`0x00, 0x00, 0xA0, 0xE1` in ARM / `0x00, 0x46` in Thumb).
 - **Safe Code Cave Allocation**: When injecting ARM9/Thumb ASM hooks via `armips`, place new code strictly in verified unused padding/caves (e.g., end of `arm9.bin` or unused RAM regions) without overwriting active heap/stack memory.
 
 ---
@@ -61,4 +67,3 @@ When working with Nintendo DS (NDS) ROM files, NitroFS, binary scripts, fonts, g
 - **Inclusive Pixel Coordinate Formula**: In raster editors (Aseprite, Photoshop, GIMP) and canvas calculations, coordinates are 0-indexed discrete points. The ending boundary must always subtract 1:
   $$X_{\text{end}} = X_{\text{start}} + W - 1, \quad Y_{\text{end}} = Y_{\text{start}} + H - 1$$
   Failing to subtract 1 introduces a 1-pixel drift that shifts adjacent OAM blocks and destroys tile alignment.
-
